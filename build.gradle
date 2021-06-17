@@ -1,0 +1,64 @@
+import org.unbrokendome.gradle.plugins.helm.command.tasks.*
+
+plugins {
+	id 'org.springframework.boot' version '2.5.0'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+	id 'org.unbroken-dome.helm' version '1.6.1'
+	id 'org.unbroken-dome.helm-releases' version '1.6.1'
+	id 'org.unbroken-dome.helm-commands' version '1.6.1'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+bootJar {
+	archiveFileName = 'metrics.jar'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+helm {
+	charts {
+		metrics {
+			sourceDir = file('helm/metrics')
+		}
+	}
+
+	releases {
+        metrics {
+			from charts.metrics
+        }
+    }
+
+	releaseTargets {
+        dockerDesktop {
+            kubeContext = 'docker-desktop'
+        }
+        kindKind {
+            kubeContext = 'kind-kind'
+        }
+    }
+}
